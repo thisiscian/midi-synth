@@ -1,0 +1,7 @@
+compile and run using from within this directory:
+	
+	mkdir build
+	cd build
+	cmake ..
+	make
+	./midi-synth	
