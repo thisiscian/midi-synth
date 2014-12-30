@@ -49,7 +49,7 @@ void generate_tone(snd_pcm_t *handle, int volume, int note, int pitch, float len
 		}
 	}
 	int err;
-	printf("pcm state: %d\n", snd_pcm_(handle));
+	printf("pcm state: %d\n", snd_pcm_avail(handle));
 	if(snd_pcm_state(handle)==SND_PCM_STATE_RUNNING) {
 	}
 	err=snd_pcm_writei(handle, data, number_of_frames);
