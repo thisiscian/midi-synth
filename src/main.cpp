@@ -7,6 +7,8 @@
 #include <iostream>
 #include <ncurses.h>
 #include <SDL2/SDL.h>
+#include <list>
+
 
 #define _USE_MATH_DEFINES
 using namespace std;	
@@ -30,8 +32,63 @@ enum TONE_TYPE {
 	SIN
 };
 
-int return_test(int x){
-	return x;
+float note_values[12]={16.35,17.32,18.35,19.45,20.60,21.83,23.12,24.50,25.96,27.50,29.14,30.87};
+
+class Note {
+	private:
+	public:
+		int note;
+		int pitch;
+		int volume;
+		float decay;
+		Note(int n, int p, int v) {
+			note=n;
+			pitch=p;
+			volume=v;
+			decay=0.99999;
+		};
+		int value(unsigned int t) {
+			float frequency=note_values[note]*(2<<pitch);
+			int state=volume*cos(M_PI*t*frequency/(2*44100));
+			//int state=volume*(fmod(t, frequency)/frequency);
+			return state;
+		};
+		int decrease_volume() {
+			float f_vol=volume*decay;
+			volume=(int) f_vol;
+			return volume;	
+		};
+};
+
+list<Note> notes;
+unsigned int play_time=0;
+
+void play_state(snd_pcm_t *handle, SoundInfo sound_info=SoundInfo()) {
+	int state=0;
+	unsigned char data[4096]={0};
+	for(int i=0; i<1024; ++i) {
+		for(list<Note>::iterator it=notes.begin(); it!=notes.end(); ++it) {
+			state+=it->value(play_time);
+			if(it->decrease_volume()==0) {
+				notes.erase(it++);
+			}
+		}
+		for(int j=0; j<2; ++j) {
+			data[4*i+2*j+0]=state%256;
+			data[4*i+2*j+1]=state/256;
+		}
+		play_time++;
+		printf("%d %d %d\n", play_time, data[4*i]+data[4*i+1]*256, state);
+	}
+
+
+	snd_pcm_prepare(handle);
+	int err=snd_pcm_writei(handle, data, 1024);
+	if(err<0) { 
+		err=snd_pcm_recover(handle, err, 0);
+		printf("we have errors"); exit(1);
+	 }
+	return;	
 }
 
 void generate_tone(snd_pcm_t *handle, int volume, int note, int pitch, float length, SoundInfo sound_info=SoundInfo(), int type=SIN ) {
@@ -49,7 +106,6 @@ void generate_tone(snd_pcm_t *handle, int volume, int note, int pitch, float len
 		}
 	}
 	int err;
-	printf("pcm state: %d\n", snd_pcm_avail(handle));
 	if(snd_pcm_state(handle)==SND_PCM_STATE_RUNNING) {
 	}
 	err=snd_pcm_writei(handle, data, number_of_frames);
@@ -96,7 +152,6 @@ snd_pcm_t* initialise(const char* device="default" ) {
 
 int main (int argc, char *argv[]) {
 	int err;
-	unsigned char *buf;
 	snd_pcm_t *playback_handle;
 
 	printf("#initialising... ");
@@ -110,34 +165,35 @@ int main (int argc, char *argv[]) {
 	int pitch=4;
 	SDL_Event event;
 	int volume=5000;
+	int time=0;
 	while(true) {
 		int note_num=-1;
 		SDL_PollEvent(&event);
-		if (event.type!=SDL_KEYDOWN) {
-			continue;
+		if (event.type==SDL_KEYDOWN) {
+			switch(event.key.keysym.sym) {
+				case SDLK_EQUALS: volume+=1000; printf("#raising volume\n"); break;
+				case SDLK_MINUS: volume-=1000; printf("#lowering volume\n"); break;
+				case SDLK_a: note_num=0; printf("#playing C\n"); break;
+				case SDLK_w: note_num=1; printf("#playing C#\n"); break;
+				case SDLK_s: note_num=2; printf("#playing D\n"); break;
+				case SDLK_e: note_num=3; printf("#playing Eb\n"); break;
+				case SDLK_d: note_num=4; printf("#playing E\n"); break;
+				case SDLK_f: note_num=5; printf("#playing F\n"); break;
+				case SDLK_t: note_num=6; printf("#playing F#\n"); break;
+				case SDLK_g: note_num=7; printf("#playing G\n"); break;
+				case SDLK_y: note_num=8; printf("#playing G#\n"); break;
+				case SDLK_h: note_num=9; printf("#playing A\n"); break;
+				case SDLK_u: note_num=10; printf("#playing Bb\n"); break;
+				case SDLK_j: note_num=11; printf("#playing B\n"); break;
+				case SDLK_q: snd_pcm_close(playback_handle); SDL_Quit(); exit(0); break;
+			}	
+			if(note_num != -1) { 
+				notes.push_back(Note(note_num,pitch,volume));
+			}
 		} else if(event.type==SDL_QUIT) {
 			exit(1);	
 		}
-		switch(event.key.keysym.sym) {
-			case SDLK_EQUALS: volume+=1000; printf("raising volume\n"); break;
-			case SDLK_MINUS: volume-=1000; printf("lowering volume\n"); break;
-			case SDLK_a: note_num=0; printf("playing C\n"); break;
-			case SDLK_w: note_num=1; printf("playing C#\n"); break;
-			case SDLK_s: note_num=2; printf("playing D\n"); break;
-			case SDLK_e: note_num=3; printf("playing Eb\n"); break;
-			case SDLK_d: note_num=4; printf("playing E\n"); break;
-			case SDLK_f: note_num=5; printf("playing F\n"); break;
-			case SDLK_t: note_num=6; printf("playing F#\n"); break;
-			case SDLK_g: note_num=7; printf("playing G\n"); break;
-			case SDLK_y: note_num=8; printf("playing G#\n"); break;
-			case SDLK_h: note_num=9; printf("playing A\n"); break;
-			case SDLK_u: note_num=10; printf("playing Bb\n"); break;
-			case SDLK_j: note_num=11; printf("playing B\n"); break;
-			case SDLK_q: snd_pcm_close(playback_handle); SDL_Quit(); exit(0); break;
-		}	
-		if(note_num != -1) { 
-			generate_tone(playback_handle, volume, note_num, pitch, 0.1);
-		}
+		play_state(playback_handle);
 	}
 	sleep(1);
 	snd_pcm_close(playback_handle);
