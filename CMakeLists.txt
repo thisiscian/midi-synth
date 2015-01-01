@@ -3,7 +3,7 @@ project (midi-synth)
 set (VERSION_MAJOR 0)
 set (VERSION_MINOR 0)
 set (TITLE "${PROJECT_NAME}")
-set (CMAKE_CXX_FLAGS "-O2")
+set (CMAKE_CXX_FLAGS "-O2 -lSDL2")
 
 find_package(ALSA REQUIRED)
 
