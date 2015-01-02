@@ -58,16 +58,20 @@ class Sound {
 			pitch=p;
 			frequency=note_frequency(note,pitch);
 			volume=v;
-			decay=0.9999999;
+			decay=0.9999;
 		};
 		int value(unsigned int t) {
-			int state=volume*cos(M_PI*frequency*t/(2*4410));
-			//int state=volume*(fmod(t, frequency)/frequency);
+			int state=0;
+			cerr << frequency << endl;
+			state+=volume*cos(M_PI*frequency*t/(10000));
+			//state+=volume*(fmod(t, frequency)/frequency);
+			//state+=frequency*5000;
 			return state;
 		};
 		int decrease_volume() {
-			volume=(int) (volume*decay);
-			return volume;	
+			float drop=0.0001; if(decay>0.0) { decay-=drop; } else { decay=0.0; }; return (decay/drop);
+			//volume=(int) (volume*decay);
+			//return volume;	
 		};
 };
 
@@ -146,7 +150,7 @@ int main (int argc, char *argv[]) {
 
 	int pitch=4;
 	SDL_Event event;
-	int volume=5000;
+	int volume=7000;
 	int time=0;
 	while(true) {
 		string note="";
