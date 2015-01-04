@@ -1,4 +1,5 @@
 #include <midi-synth/keyboard.hpp>
+#include <iostream>
 
 Key::Key() {};
 Key::Key(int s) {
@@ -38,7 +39,9 @@ int Keyboard::update() {
 	keyboard_state=SDL_GetKeyboardState(NULL);
 	for(std::map<std::string,Key>::iterator it=keys.begin(); it!=keys.end(); ++it) {
 		Key k=it->second;
-		if(keyboard_state[k.scancode]) k.press();
+		if(keyboard_state[k.scancode]) {
+			k.press();
+		}
 	}
 	return 0;
 };

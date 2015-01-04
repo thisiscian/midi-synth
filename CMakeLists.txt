@@ -11,7 +11,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include/")
 
 add_executable(
 	${PROJECT_NAME}
-	src/main.cpp src/keyboard.cpp src/display.cpp
+	src/main.cpp src/keyboard.cpp src/display.cpp src/audio.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${ALSA_LIBRARIES})

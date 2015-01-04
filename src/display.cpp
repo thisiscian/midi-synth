@@ -1,11 +1,12 @@
 #include <midi-synth/display.hpp>
 
-Display::Display(int w,int h, const char name[]) {
+Display::Display(int w,int h, int flag, const char name[]) {
 	width=w;
 	height=h;
 	SDL_Init(SDL_INIT_VIDEO);
-	window=SDL_CreateWindow(name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
+	window=SDL_CreateWindow(name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flag);
 	renderer=SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
+	SDL_GetWindowSize(window,&w,&h);
 };
 
 void Display::stop() {

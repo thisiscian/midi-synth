@@ -8,7 +8,7 @@
 			SDL_Renderer *renderer;
 			int width;
 			int height;
-			Display(int w=640,int h=480, const char name[]="keyboard simulator");
+			Display(int w=640,int h=480, int flag=0, const char name[]="keyboard simulator");
 			void stop();
 			void clear();
 			void draw();
